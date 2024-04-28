@@ -1,0 +1,56 @@
+##Import the necessary classes and functions from the transformers and PyPDF2 libraries, as well as the torch library for tensor operations.
+from transformers import LlamaForCausalLM, LlamaTokenizer
+from PyPDF2 import PdfReader
+import torch
+
+
+## Load the LLaMA3 model and tokenizer
+##openlm-research/open_llama_3b is a publicly available version of the LLaMA 3B model weights that have been released by the OpenLM Research team
+model = LlamaForCausalLM.from_pretrained("openlm-research/open_llama_3b")
+tokenizer = LlamaTokenizer.from_pretrained("openlm-research/open_llama_3b")
+
+##We load the PDF file using the PdfReader class from PyPDF2 and extract the text from all pages.   i have kept the files in google drive. hence added additional lines for it.
+import os
+from PyPDF2 import PdfReader
+from google.colab import drive
+
+
+# Mount Google Drive
+drive.mount('/content/drive')
+
+# Print the current working directory
+print(f"Current working directory: {os.getcwd()}")
+# Path to the folder containing the PDF file
+folder_path = "/content/drive/MyDrive/"
+# Name of the PDF file
+pdf_file_name = "World_Med.pdf"
+# Load the PDF file
+pdf_reader = PdfReader('/content/drive/MyDrive/World_Med.pdf')
+text = ''
+for page in pdf_reader.pages:
+    text += page.extract_text()
+
+
+#We define a function get_answer that takes a question as input, tokenizes it, passes it to the LLaMA3 model for generation, and returns the generated answer.
+# Function to get the answer from the LLaMA3 model
+def get_answer(question):
+    # Load the LLaMA3 model and tokenizer
+    #model = LlamaForCausalLM.from_pretrained("openlm-research/open_llama_3b")
+    #tokenizer = LlamaTokenizer.from_pretrained("openlm-research/open_llama_3b")
+
+    inputs = tokenizer.encode(question, return_tensors="pt")
+    outputs = model.generate(inputs, max_length=512, top_p=0.9, do_sample=True)
+    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return answer
+
+##We start a chat loop where the user can enter questions. If the user enters 'quit', the loop breaks.
+# Chat loop
+print("Welcome to the PDF Chat App!")
+while True:
+    question = input("Enter your question (or 'quit' to exit): ")
+    if question.lower() == 'quit':
+        break
+    answer = get_answer(question)
+    print(f"Answer: {answer}")
+
+#For each question, we call the get_answer function and print the generated answer.
